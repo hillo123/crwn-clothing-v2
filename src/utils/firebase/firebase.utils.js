@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore'
+import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyAw_5jwE1W60FH-7Qf2Aa0lO9Kt0I-XCmM",
@@ -25,7 +26,10 @@ export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
 
 export const db = getFirestore();
 
-export const createUserDocumentFromAuth = async (userAuth) => {
+export const createUserDocumentFromAuth = async (userAuth, additionalInformation = {}) => {
+
+    if (!userAuth) return;
+
     const userDocRef = doc(db, 'users', userAuth.uid);
 
     const userSnapshot = await getDoc(userDocRef);
@@ -38,12 +42,23 @@ export const createUserDocumentFromAuth = async (userAuth) => {
             await setDoc(userDocRef, {
                 displayName,
                 email,
-                createdAt
+                createdAt,
+                ...additionalInformation
             });
         } catch (error) {
-            console.log('error creating the user', error.message);
+            if (error.code === 'auth/email-already-in-use') {
+                alert(' The email exist in our system ')
+            }
+            else console.log('error creating the user', error.message);
         }
     }
     return userDocRef;
 };
+
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+    if (!email || !password) return;
+
+
+    return await createUserWithEmailAndPassword(auth, email, password);
+}
 
